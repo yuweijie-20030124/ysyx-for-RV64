@@ -24,6 +24,10 @@ static int is_batch_mode = false;
 void init_regex();
 void init_wp_pool();
 word_t vaddr_read(vaddr_t addr, int len);
+void remove_watch(int num);
+void add_watch(char *expr,word_t addr);
+void display_watch();
+
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
   static char *line_read = NULL;
@@ -69,7 +73,7 @@ static int cmd_info(char *args){
     return 0;
   }
   else if(*args == 'w'){
-    // watchpoint_display(); todo
+    display_watch();
     return 0;
   }
   else {
@@ -154,6 +158,30 @@ static int cmd_p(char *args) {
     return 0;
 }
 
+static int cmd_d(char *args) {
+  char *NUM  = strtok(NULL, " ");
+  int num = atoi(NUM);
+  remove_watch(num);
+  return 0;
+}
+
+static int cmd_w(char *args) {
+  char *EXPR  = strtok(NULL, " ");
+  if(EXPR==NULL){
+    Log(" error expression\n");
+    return 0;
+  }
+  bool flag=true;
+  word_t addr = expr(EXPR,&flag);
+  if(flag==false){
+    Log("error expression\n");
+    return 0;
+  }
+  add_watch(EXPR,addr);
+  return 0;
+}
+
+
 static int cmd_q(char *args) {
   nemu_state.state = NEMU_END;
   return -1;
@@ -173,6 +201,8 @@ static struct {
   { "info", "info r to check out all registers , info w to check out all watchpoint", cmd_info},
   { "x", "Check out the physical memory ", cmd_x},
   { "p", "Evaluate expression", cmd_p},
+  { "w", "creat watchpoint", cmd_w},
+  { "d", "delete watchpoint", cmd_d},
 
   /* TODO: Add more commands */
 
