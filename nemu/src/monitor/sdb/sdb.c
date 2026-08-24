@@ -23,7 +23,7 @@ static int is_batch_mode = false;
 
 void init_regex();
 void init_wp_pool();
-
+word_t vaddr_read(vaddr_t addr, int len);
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
   static char *line_read = NULL;
@@ -79,10 +79,80 @@ static int cmd_info(char *args){
   return 0;
 }
 
-// static int cmd_x(char *args){
+static int cmd_x(char *args){
+  if(args == NULL){
+      printf("too few parameter! \n");
+      return 1;
+  } 
+  char *arg = strtok(args," ");
+  if(arg == NULL){
+      printf("too few parameter!! \n");
+      return 0;
+  }
+  int  n = atoi(arg);
+  char *EXPR = strtok(NULL," ");
+  if(EXPR == NULL){                                                                                                                                          
+      printf("too few parameter!!! \n");
+      return 0;
+  }
+  bool success = true;
+  vaddr_t addr = expr(EXPR,&success);
+  if (success!=true){
+      printf("ERRO!!\n");
+      return 0;
+  }
+  if(addr>=0x80000000 && addr<= 0x87ffffff){
+  for(int i = 0 ; i < n ; i++){
+      uint32_t data = vaddr_read(addr + i * 4,4);
+      printf("0x%lx  " , addr + i * 4 );
+      for(int j =0 ; j < 4 ; j++){
+          printf("0x%02x " , data & 0xff);
+          data = data >> 8 ;
+      }
+      printf("\n");
+  }
+}
 
-//   return 0;
-// }
+  else printf("you are out of bound\n");     
+  return 0;
+}  
+
+static int cmd_p(char *args) {
+    bool success;
+    if(strcmp(args, "test") == 0) {
+        char str[5000];
+        unsigned long long answer;
+        bool all_correct = true;
+        FILE *fp = fopen("/home/ywj/ysyx-workbench/nemu/tools/gen-expr/build/input", "r");
+        assert(fp != NULL);
+        
+        while(fscanf(fp, "%llu %[^\n]", &answer, str) > 0) {
+            uint64_t result = expr(str, &success);
+            if(!success || result != answer) {
+                printf("calculate wrong,the expr is \"%s\"\n", str);
+                printf("your answer is: %llu, the true answer is: %llu\n",
+                       (unsigned long long)result, answer);
+                all_correct = false;
+                printf("tests not pass\n");
+                break;  
+            }
+        }
+        fclose(fp);
+        if(all_correct) {
+            printf("all tests pass\n");
+        }
+    }
+    else {
+        uint64_t result = expr(args, &success);
+        if(!success) {
+            printf("expression error\n");
+        }
+        else {
+            printf("0x%016" PRIx64 " (%" PRIu64 ")\n", result, result);
+        }
+    }
+    return 0;
+}
 
 static int cmd_q(char *args) {
   nemu_state.state = NEMU_END;
@@ -101,6 +171,8 @@ static struct {
   { "q", "Exit NEMU", cmd_q },
   { "si", "Execute once", cmd_si},
   { "info", "info r to check out all registers , info w to check out all watchpoint", cmd_info},
+  { "x", "Check out the physical memory ", cmd_x},
+  { "p", "Evaluate expression", cmd_p},
 
   /* TODO: Add more commands */
 
