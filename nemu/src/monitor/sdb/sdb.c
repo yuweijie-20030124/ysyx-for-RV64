@@ -69,11 +69,20 @@ static int cmd_info(char *args){
     return 0;
   }
   else if(*args == 'w'){
-    // watchpoint_display();
+    // watchpoint_display(); todo
+    return 0;
+  }
+  else {
+    printf("info r to check out all registers , info w to check out all watchpoint\n");
     return 0;
   }
   return 0;
 }
+
+// static int cmd_x(char *args){
+
+//   return 0;
+// }
 
 static int cmd_q(char *args) {
   nemu_state.state = NEMU_END;
