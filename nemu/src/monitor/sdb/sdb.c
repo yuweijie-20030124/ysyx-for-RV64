@@ -59,6 +59,22 @@ static int cmd_si(char *args){
   }
 }
 
+static int cmd_info(char *args){
+  if(args==NULL){
+    printf("info r to check out all registers , info w to check out all watchpoint\n");
+    return 0;
+  }
+  else if(*args == 'r'){
+    isa_reg_display();
+    return 0;
+  }
+  else if(*args == 'w'){
+    // watchpoint_display();
+    return 0;
+  }
+  return 0;
+}
+
 static int cmd_q(char *args) {
   nemu_state.state = NEMU_END;
   return -1;
@@ -75,6 +91,7 @@ static struct {
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
   { "si", "Execute once", cmd_si},
+  { "info", "info r to check out all registers , info w to check out all watchpoint", cmd_info},
 
   /* TODO: Add more commands */
 

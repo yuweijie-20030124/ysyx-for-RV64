@@ -24,6 +24,14 @@ const char *regs[] = {
 };
 
 void isa_reg_display() {
+  printf("%-8s" FMT_WORD "\t \n", "PC", cpu.pc);
+  for (int i = 0; i < 8; i++) {
+    for (int j = 0; j < 4; j++) {
+      int idx = i * 4 + j;
+      printf("%-8s" FMT_WORD "\t", reg_name(idx), gpr(idx));
+    }
+    printf("\n");
+  }
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {
