@@ -5,8 +5,11 @@ void __am_timer_init() {
 }
 
 void __am_timer_uptime(AM_TIMER_UPTIME_T *uptime) {
-    uptime->us = inl(RTC_ADDR);
-    uptime->us += ((uint64_t)inl(RTC_ADDR + 4) << 32);
+    // 必须先读高32位(offset 4): NEMU 的 RTC 设备在读到 offset 4 时才锁存最新时间,
+    // 随后读低32位(offset 0)得到的就是同一时刻快照的低32位, 否则会读到上一次的旧值
+    uint64_t hi = inl(RTC_ADDR + 4);
+    uint64_t lo = inl(RTC_ADDR);
+    uptime->us = (hi << 32) | lo;
 }
 
 void __am_timer_rtc(AM_TIMER_RTC_T *rtc) {
