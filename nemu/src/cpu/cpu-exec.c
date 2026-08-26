@@ -17,6 +17,7 @@
 #include <cpu/decode.h>
 #include <cpu/difftest.h>
 #include <locale.h>
+#include <cpu/ringbuffer.h>
 
 /* The assembly code of instructions executed is only output to the screen
  * when the number of instructions executed is less than this value.
@@ -24,6 +25,8 @@
  * You can modify this value as you want.
  */
 #define MAX_INST_TO_PRINT 10
+
+CircularBuffer cb;
 
 CPU_state cpu = {};
 uint64_t g_nr_guest_inst = 0;
@@ -79,11 +82,13 @@ static void exec_once(Decode *s, vaddr_t pc) {
   void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
   disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
       MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t *)&s->isa.inst, ilen);
+  enqueue(&cb, s->logbuf);
 #endif
 }
 
 static void execute(uint64_t n) {
   Decode s;
+  initBuffer(&cb); // 初始化环形缓冲区，大小为BUFFER_SIZE
   for (;n > 0; n --) {
     exec_once(&s, cpu.pc);
     g_nr_guest_inst ++;
@@ -91,6 +96,7 @@ static void execute(uint64_t n) {
     if (nemu_state.state != NEMU_RUNNING) break;
     IFDEF(CONFIG_DEVICE, device_update());
   }
+  printBuffer(&cb);
 }
 
 static void statistic() {
